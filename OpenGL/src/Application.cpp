@@ -4,8 +4,10 @@
 #include<string>
 #include<fstream>
 #include<sstream>
+#include <stdio.h>
+#include<cassert>
 
-#define ASSERT(x) if(!(x)) std::cin.get();
+#define ASSERT(x) if(!(x)) throw std::runtime_error("OpenGL Error!");
 #define GLCALL(x) GLClearError();\
 x;\
 ASSERT(GLGetError(#x, __FILE__, __LINE__));
@@ -105,7 +107,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(640, 640, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -114,6 +116,8 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+
+    glfwSwapInterval(1);
 
     if (glewInit() != GLEW_OK)
         return -1;
@@ -158,14 +162,28 @@ int main(void)
     unsigned int shaderProgram = CreateShaderProgram(shaderSrc.VertexShaderSource, shaderSrc.FragmentShaderSource);
     glUseProgram(shaderProgram);
 
+    GLCALL(int location = glGetUniformLocation(shaderProgram, "u_Color"));
+    ASSERT(location != -1);
+    GLCALL(glUniform4f(location, 0.0f, 0.5f, 0.0f, 1.0f));
+
+    float r = 0.0f;
+    float increment = 0.05f;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        if (r >= 1.0f)
+            increment = -0.05f;
+        else if (r <= 0.0f)
+            increment = 0.05f;
+
+        r += increment;
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
+        GLCALL(glUniform4f(location, r, 0.5f, 0.0f, 1.0f));
+
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
