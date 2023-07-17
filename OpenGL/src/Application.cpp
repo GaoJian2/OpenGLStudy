@@ -106,6 +106,10 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(640, 640, "Hello World", NULL, NULL);
     if (!window)
@@ -129,10 +133,14 @@ int main(void)
         -0.5f,0.5f,
     };
 
+    unsigned int vao;
+    GLCALL(glGenVertexArrays(1, &vao));
+    GLCALL(glBindVertexArray(vao));
+
     unsigned int buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
+    GLCALL(glGenBuffers(1, &buffer));
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
+    GLCALL(glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), positions, GL_STATIC_DRAW));
 
 
     unsigned int indices[6]{
@@ -141,9 +149,9 @@ int main(void)
     };
 
     unsigned int ibo;
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+    GLCALL(glGenBuffers(1, &ibo));
+    GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+    GLCALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW));
 
     //参数说明:
     /*(index 0):代表这是顶点的第几个属性。这里只指定了顶点的位置属性且index标为第一个
@@ -153,18 +161,23 @@ int main(void)
     * (stride 16):顶点之间（第n个顶点到第n+1个顶点）的偏移量。为了跳转到下一个顶点的内存地址。
     * (*pointer (void*)0):一个顶点中第n(n就是函数对应的这个属性)个属性的偏移量。
     */
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+    GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0));
     //index 就是上面函数的第一个参数
-    glEnableVertexAttribArray(0);
+    GLCALL(glEnableVertexAttribArray(0));
 
     ShaderProgramSource shaderSrc = ParseShaderSource("resources/shaders/BasicShader.shader");
 
     unsigned int shaderProgram = CreateShaderProgram(shaderSrc.VertexShaderSource, shaderSrc.FragmentShaderSource);
-    glUseProgram(shaderProgram);
+    GLCALL(glUseProgram(shaderProgram));
 
     GLCALL(int location = glGetUniformLocation(shaderProgram, "u_Color"));
     ASSERT(location != -1);
     GLCALL(glUniform4f(location, 0.0f, 0.5f, 0.0f, 1.0f));
+
+    GLCALL(glUseProgram(0));
+    GLCALL(glBindVertexArray(0));
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 
     float r = 0.0f;
     float increment = 0.05f;
@@ -179,9 +192,13 @@ int main(void)
 
         r += increment;
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLCALL(glClear(GL_COLOR_BUFFER_BIT));
 
+        GLCALL(glUseProgram(shaderProgram));
         GLCALL(glUniform4f(location, r, 0.5f, 0.0f, 1.0f));
+
+        GLCALL(glBindVertexArray(vao));
+        GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
 
         GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
@@ -192,7 +209,7 @@ int main(void)
         glfwPollEvents();
     }
 
-    glDeleteProgram(shaderProgram);
+    GLCALL(glDeleteProgram(shaderProgram));
 
     glfwTerminate();
     return 0;
