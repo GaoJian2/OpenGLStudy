@@ -1,0 +1,17 @@
+*.exe
+*.pdb
+*.obj
+*.recipe
+*.ilk
+*.log
+*.tlog
+*.lastbuildstate
+*.idb
+*.vsidx
+*.lock
+*.suo
+*.db
+*.db-shm
+*.ipch
+*.db-wal
+*.opendb
