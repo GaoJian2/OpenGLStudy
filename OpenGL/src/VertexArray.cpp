@@ -1,5 +1,6 @@
 #include "VertexArray.h"
 #include "Renderer.h"
+#include "VertexBufferLayout.h"
 
 VertexArray::VertexArray()
 {
@@ -16,7 +17,7 @@ void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
 {
     Bind();
 	vb.Bind();
-    const auto& elements = layout.GetElements();
+    const std::vector<VertexBufferElement>& elements = layout.GetElements();
     unsigned int offset = 0;
     for (int i = 0; i < elements.size(); i++)
     {
