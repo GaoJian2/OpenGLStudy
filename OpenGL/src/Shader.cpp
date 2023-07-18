@@ -28,16 +28,26 @@ void Shader::UnBind() const
     GLCALL(glUseProgram(0));
 }
 
+void Shader::SetUniform1i(const std::string& name, int value)
+{
+    GLCALL(glUniform1i(GetUniformLocation(name), value));
+}
+
+void Shader::SetUniform1f(const std::string& name, float value)
+{
+    GLCALL(glUniform1f(GetUniformLocation(name), value));
+}
+
 void Shader::SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
 {
     GLCALL(glUniform4f(GetUniformLocation(name), v0, v1, v2, v3));
 }
 
-unsigned int Shader::GetUniformLocation(const std::string& name)
+int Shader::GetUniformLocation(const std::string& name)
 {
     if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
         return m_UniformLocationCache[name];
-    GLCALL(unsigned int location = glGetUniformLocation(m_RendererID, name.c_str()));
+    GLCALL(int location = glGetUniformLocation(m_RendererID, name.c_str()));
     if (location == -1)
         std::cout << "[OpenGL Warning]:" << name << " doesn't exist!" << std::endl;
 
@@ -47,28 +57,28 @@ unsigned int Shader::GetUniformLocation(const std::string& name)
 
 ShaderProgramSource Shader::ParseShaderSource(const std::string& filepath)
 {
+    std::ifstream stream(filepath); /* 这里没判断文件是否能正常打开 is_open */
     enum class ShaderType {
-        None = -1,
-        Vertex = 0,
-        Fragment = 1
+        NONE = -1, VERTEX = 0, FRAGMENT = 1
     };
 
-    std::stringstream ss[2];
     std::string line;
-    ShaderType type = ShaderType::None;
-    std::ifstream stream(filepath);
-    while (std::getline(stream, line)) {
-        if (line.find("#vertex") != std::string::npos)
-            type = ShaderType::Vertex;
-        else if (line.find("fragment") != std::string::npos)
-            type = ShaderType::Fragment;
-        else
-        {
-            ss[(int)type] << line << "\n";
+    std::stringstream ss[2];
+    ShaderType type = ShaderType::NONE;
+    while (getline(stream, line)) {
+        if (line.find("#shader") != std::string::npos) { /* 找到#shader标记 */
+            if (line.find("vertex") != std::string::npos) { /* 顶点着色器标记 */
+                type = ShaderType::VERTEX;
+            }
+            else if (line.find("fragment") != std::string::npos) { /* 片段着色器标记 */
+                type = ShaderType::FRAGMENT;
+            }
+        }
+        else {
+            ss[(int)type] << line << '\n';
         }
     }
-
-    return{ ss[0].str(),ss[1].str() };
+    return { ss[0].str(),ss[1].str() };
 }
 
 unsigned int Shader::CompileShader(const std::string & source, unsigned int type)

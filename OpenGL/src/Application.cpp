@@ -12,6 +12,7 @@
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 #include "Shader.h"
+#include "Texture.h"
 
 int main(void)
 {
@@ -42,29 +43,38 @@ int main(void)
         if (glewInit() != GLEW_OK)
             return -1;
 
-        float positions[12] = {
-            -0.5f, -0.5f,
-            0.5f,-0.5f,
-            0.5f, 0.5f,
-            -0.5f,0.5f,
+        float positions[] = {
+            -0.5f, -0.5f, 0.0f, 0.0f,
+            0.5f, -0.5f, 1.0f, 0.0f,
+            0.5f, 0.5f, 1.0f, 1.0f,
+            -0.5f, 0.5f, 0.0f, 1.0f,
         };
-
-        VertexArray va;
-        VertexBuffer vb(positions, 4 * 2 * sizeof(float));
-        VertexBufferLayout layout;
-        layout.Push<float>(2);
-        va.AddBuffer(vb, layout);
 
         unsigned int indices[6]{
             0, 1, 2,
             2, 3, 0
         };
 
+        GLCALL(glEnable(GL_BLEND));
+        GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+        VertexArray va;
+        VertexBuffer vb(positions, 4 * 4 * sizeof(float));
+        VertexBufferLayout layout;
+        layout.Push<float>(2);
+        layout.Push<float>(2);
+        va.AddBuffer(vb, layout);
+
+
         IndexBuffer ib(indices, 6);
 
         Shader shader("resources/shaders/BasicShader.shader");
         shader.Bind();
         shader.SetUniform4f("u_Color", 0.0f, 0.5f, 0.0f, 1.0f);
+
+        Texture texture("resources/textures/ChernoLogo.png");
+        texture.Bind(0);
+        shader.SetUniform1i("u_Texture", 0);
 
         Renderer renderer;
 
@@ -90,7 +100,8 @@ int main(void)
             renderer.Clear();
 
             shader.Bind();
-            shader.SetUniform4f("u_Color", r, 0.5f, 0.0f, 1.0f);
+            shader.SetUniform1i("u_Texture", 0);
+            //shader.SetUniform4f("u_Color", r, 0.5f, 0.0f, 1.0f);
 
             renderer.Draw(va, ib, shader);
 
