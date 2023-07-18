@@ -10,6 +10,7 @@
 #include "Renderer.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "VertexArray.h"
 
 struct ShaderProgramSource {
     std::string VertexShaderSource;
@@ -121,12 +122,11 @@ int main(void)
             -0.5f,0.5f,
         };
 
-        unsigned int vao;
-        GLCALL(glGenVertexArrays(1, &vao));
-        GLCALL(glBindVertexArray(vao));
-
+        VertexArray va;
         VertexBuffer vb(positions, 4 * 2 * sizeof(float));
-
+        VertexBufferLayout layout;
+        layout.Push<float>(2);
+        va.AddBuffer(vb, layout);
 
         unsigned int indices[6]{
             0, 1, 2,
@@ -135,17 +135,6 @@ int main(void)
 
         IndexBuffer ib(indices, 6);
 
-        //参数说明:
-        /*(index 0):代表这是顶点的第几个属性。这里只指定了顶点的位置属性且index标为第一个
-        * (size 2):代表这是几维的顶点。这里是二维顶点。
-        * (type float):属性类型
-        * (normalized false):已经被归一化。例如颜色0~255，需要将此参数设置为true，归一化为0~1的浮点数
-        * (stride 16):顶点之间（第n个顶点到第n+1个顶点）的偏移量。为了跳转到下一个顶点的内存地址。
-        * (*pointer (void*)0):一个顶点中第n(n就是函数对应的这个属性)个属性的偏移量。
-        */
-        GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0));
-        //index 就是上面函数的第一个参数
-        GLCALL(glEnableVertexAttribArray(0));
 
         ShaderProgramSource shaderSrc = ParseShaderSource("resources/shaders/BasicShader.shader");
 
@@ -179,7 +168,7 @@ int main(void)
             GLCALL(glUseProgram(shaderProgram));
             GLCALL(glUniform4f(location, r, 0.5f, 0.0f, 1.0f));
 
-            GLCALL(glBindVertexArray(vao));
+            va.Bind();
             ib.Bind();
 
             GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
